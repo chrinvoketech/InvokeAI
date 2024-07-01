@@ -26,7 +26,18 @@ x-invokeai: &invokeai
         target: ${CONTAINER_INVOKEAI_ROOT:-/invokeai}
         bind:
           create_host_path: true
-      - ${HF_HOME:-~/.cache/huggingface}:${HF_HOME:-/invokeai/.cache/huggingface}
+      - type: bind
+        source: ${HF_HOME:-~/.cache/huggingface}
+        target: ${HF_HOME:-/invokeai/.cache/huggingface}
+        bind:
+          create_host_path: true
+    deploy2:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     tty: true
     stdin_open: true
 
