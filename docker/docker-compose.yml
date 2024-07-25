@@ -3,29 +3,32 @@
 version: '3.8'
 
 x-invokeai: &invokeai
-    image: "local/invokeai:latest"
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+  image: 'local/invokeai:latest'
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
 
-    # Create a .env file in the same directory as this docker-compose.yml file
-    # and populate it with environment variables. See .env.sample
-    env_file:
-      - path: .env
-        required: false
+  # Create a .env file in the same directory as this docker-compose.yml file
+  # and populate it with environment variables. See .env.sample
+  env_file:
+    - path: .env
+      required: false
 
-    # variables without a default will automatically inherit from the host environment
-    environment:
-      # if set, CONTAINER_INVOKEAI_ROOT will override the Invoke runtime directory location *inside* the container
-      - INVOKEAI_ROOT=${CONTAINER_INVOKEAI_ROOT:-/invokeai}
-      - HF_HOME
-    ports:
-      - "${INVOKEAI_PORT:-9090}:${INVOKEAI_PORT:-9090}"
-    volumes:
-      - invokeai:${CONTAINER_INVOKEAI_ROOT:-/invokeai}
-      - huggingface:${HF_HOME:-/invokeai/.cache/huggingface}
-    tty: true
-    stdin_open: true
+  # variables without a default will automatically inherit from the host environment
+  environment:
+    # if set, CONTAINER_INVOKEAI_ROOT will override the Invoke runtime directory location *inside* the container
+    - INVOKEAI_ROOT=${CONTAINER_INVOKEAI_ROOT:-/invokeai}
+    - HF_HOME
+  ports:
+    - '${INVOKEAI_PORT:-9090}:${INVOKEAI_PORT:-9090}'
+  volumes:
+    - invokeai:${CONTAINER_INVOKEAI_ROOT:-/invokeai}
+    - huggingface:${HF_HOME:-/invokeai/.cache/huggingface}
+  tty: true
+  stdin_open: true
+  labels:
+    - 'traefik.http.middlewares.basic-auth.basicauth.users=${INVOKE_AUTH_USERNAME}:${INVOKE_AUTH_PASSWORD}'
+    - 'traefik.http.routers.https-0-pss4wco.middlewares=gzip,basic-auth'
 
 services:
   invokeai-nvidia:
