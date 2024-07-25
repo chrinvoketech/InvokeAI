@@ -27,7 +27,7 @@ x-invokeai: &invokeai
   tty: true
   stdin_open: true
   labels:
-    - 'traefik.http.middlewares.basic-auth.basicauth.users=$INVOKE_AUTH_USERNAME:$INVOKE_AUTH_PASSWORD'
+    - traefik.http.middlewares.basic-auth.basicauth.users=$INVOKE_AUTH_USERNAME:$INVOKE_AUTH_PASSWORD
     - 'traefik.http.routers.https-0-pss4wco.middlewares=gzip,basic-auth'
 
 services:
