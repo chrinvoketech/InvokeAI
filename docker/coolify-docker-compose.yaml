@@ -1,0 +1,169 @@
+services:
+  invokeai-nvidia:
+    image: 'local/invokeai:latest'
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - 'INVOKEAI_ROOT=${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - HF_HOME
+    ports:
+      - '${INVOKEAI_PORT:-9090}:${INVOKEAI_PORT:-9090}'
+    volumes:
+      - 'invokeai:${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - 'huggingface:${HF_HOME:-/invokeai/.cache/huggingface}'
+    tty: true
+    stdin_open: true
+    labels:
+      - 'traefik.http.middlewares.basic-auth.basicauth.users=$INVOKE_AUTH_USERNAME:$INVOKE_AUTH_PASSWORD'
+      - traefik.http.routers.https-1-q0cko40.entryPoints=https
+      - traefik.http.routers.https-1-q0cko40.middlewares=gzip
+      - 'traefik.http.routers.https-1-q0cko40.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/api/v1/images`)'
+      - traefik.http.routers.https-1-q0cko40.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-1-q0cko40.tls=true
+      - traefik.http.routers.https-1-q0cko40.priority=2
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-0-og80s4g.entryPoints=http
+      - traefik.http.routers.http-0-og80s4g.middlewares=redirect-to-https
+      - 'traefik.http.routers.http-0-og80s4g.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/`)'
+      - traefik.http.routers.https-0-og80s4g.entryPoints=https
+      - 'traefik.http.routers.https-0-og80s4g.middlewares=gzip,basic-auth'
+      - traefik.http.routers.https-0-og80s4g.priority=1
+      - 'traefik.http.routers.https-0-og80s4g.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/`)'
+      - traefik.http.routers.https-0-og80s4g.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-0-og80s4g.tls=true
+      - traefik.http.routers.https-1-og80s4g.entryPoints=https
+      - 'traefik.http.routers.https-1-og80s4g.middlewares=gzip'
+      - traefik.http.routers.https-1-og80s4g.priority=2
+      - 'traefik.http.routers.https-1-og80s4g.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/api/v1/images`)'
+      - traefik.http.routers.https-1-og80s4g.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-1-og80s4g.tls=true
+      - 'caddy_0.encode=zstd gzip'
+      - 'caddy_0.handle_path.0_reverse_proxy={{upstreams}}'
+      - 'caddy_0.handle_path=/*'
+      - caddy_0.header=-Server
+      - 'caddy_0.try_files={path} /index.html /index.php'
+      - 'caddy_0=https://invokeai.characterinvoker.com'
+      - caddy_ingress_network=b8kcs84
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.318
+      - coolify.applicationId=10
+      - coolify.type=application
+      - coolify.name=invokeai-nvidia-b8kcs84-160717320678
+      - coolify.pullRequestId=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+    networks:
+      b8kcs84: null
+    restart: unless-stopped
+    container_name: invokeai-nvidia-b8kcs84-160717320678
+  invokeai-cpu:
+    image: 'local/invokeai:latest'
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - 'INVOKEAI_ROOT=${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - HF_HOME
+    ports:
+      - '${INVOKEAI_PORT:-9090}:${INVOKEAI_PORT:-9090}'
+    volumes:
+      - 'invokeai:${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - 'huggingface:${HF_HOME:-/invokeai/.cache/huggingface}'
+    tty: true
+    stdin_open: true
+    labels:
+      - 'traefik.http.middlewares.basic-auth.basicauth.users=$INVOKE_AUTH_USERNAME:$INVOKE_AUTH_PASSWORD'
+      - 'traefik.http.routers.https-0-q0cko40.middlewares=gzip,basic-auth'
+      - traefik.http.routers.https-0-q0cko40.priority=1
+      - traefik.http.routers.https-1-q0cko40.entryPoints=https
+      - traefik.http.routers.https-1-q0cko40.middlewares=gzip
+      - 'traefik.http.routers.https-1-q0cko40.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/api/v1/images`)'
+      - traefik.http.routers.https-1-q0cko40.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-1-q0cko40.tls=true
+      - traefik.http.routers.https-1-q0cko40.priority=2
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.318
+      - coolify.applicationId=10
+      - coolify.type=application
+      - coolify.name=invokeai-cpu-b8kcs84-160717325339
+      - coolify.pullRequestId=0
+    profiles:
+      - cpu
+    networks:
+      b8kcs84: null
+    restart: unless-stopped
+    container_name: invokeai-cpu-b8kcs84-160717325339
+  invokeai-rocm:
+    image: 'local/invokeai:latest'
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - 'INVOKEAI_ROOT=${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - HF_HOME
+    ports:
+      - '${INVOKEAI_PORT:-9090}:${INVOKEAI_PORT:-9090}'
+    volumes:
+      - 'invokeai:${CONTAINER_INVOKEAI_ROOT:-/invokeai}'
+      - 'huggingface:${HF_HOME:-/invokeai/.cache/huggingface}'
+    tty: true
+    stdin_open: true
+    labels:
+      - 'traefik.http.middlewares.basic-auth.basicauth.users=$INVOKE_AUTH_USERNAME:$INVOKE_AUTH_PASSWORD'
+      - 'traefik.http.routers.https-0-q0cko40.middlewares=gzip,basic-auth'
+      - traefik.http.routers.https-0-q0cko40.priority=1
+      - traefik.http.routers.https-1-q0cko40.entryPoints=https
+      - traefik.http.routers.https-1-q0cko40.middlewares=gzip
+      - 'traefik.http.routers.https-1-q0cko40.rule=Host(`invokeai.characterinvoker.com`) && PathPrefix(`/api/v1/images`)'
+      - traefik.http.routers.https-1-q0cko40.tls.certresolver=letsencrypt
+      - traefik.http.routers.https-1-q0cko40.tls=true
+      - traefik.http.routers.https-1-q0cko40.priority=2
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.318
+      - coolify.applicationId=10
+      - coolify.type=application
+      - coolify.name=invokeai-rocm-b8kcs84-160717328966
+      - coolify.pullRequestId=0
+    devices:
+      - '/dev/kfd:/dev/kfd'
+      - '/dev/dri:/dev/dri'
+    profiles:
+      - rocm
+    networks:
+      b8kcs84: null
+    restart: unless-stopped
+    container_name: invokeai-rocm-b8kcs84-160717328966
+volumes:
+  invokeai:
+    driver: local
+    driver_opts:
+      type: none
+      device: '${HOST_INVOKEAI_ROOT:-${INVOKEAI_ROOT:-~/invokeai}}'
+      o: bind
+  huggingface:
+    driver: local
+    driver_opts:
+      type: none
+      device: '${HF_HOME:-~/.cache/huggingface}'
+      o: bind
+networks:
+  b8kcs84:
+    name: b8kcs84
+    external: true
+configs: {}
+secrets: {}
